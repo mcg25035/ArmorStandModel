@@ -1,0 +1,4 @@
+name: ArmorStandModel
+version: '1.0-SNAPSHOT'
+main: dev.codingbear.asm.Main
+api-version: '1.20'

@@ -1,0 +1,4 @@
+name: ArmorStandModel
+version: '${project.version}'
+main: dev.codingbear.asm.Main
+api-version: '1.20'

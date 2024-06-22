@@ -19,6 +19,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
 import static dev.codingbear.utils.EulerAngle.RotationOrder.XYZ;
+import static dev.codingbear.utils.EulerAngle.RotationOrder.ZYX;
 
 
 public class ModelEntity {
@@ -30,6 +31,9 @@ public class ModelEntity {
     public int dx;
     public int dy;
     public int dz;
+    double rx = 0;
+    double ry = 0;
+    double rz = 0;
 
     public enum ArmorStandSize {
         SMALL, MEDIUM, LARGE
@@ -92,6 +96,10 @@ public class ModelEntity {
     }
 
     public void rotateEuler(double angleX, double angleY, double angleZ) {
+        this.rx = angleX;
+        this.ry = angleY;
+        this.rz = angleZ;
+
         currentEuler = new EulerAngle(angleX, angleY, angleZ);
         for (ArmorStandNode node : this.armorStands) {
             EulerAngle eulerAngle = new EulerAngle(
@@ -99,13 +107,14 @@ public class ModelEntity {
                     node.rawY,
                     node.rawZ
             );
-            currentEuler.rotate(angleX, angleY, angleZ, XYZ);
-            eulerAngle.rotate(angleX, angleY, angleZ, XYZ);
-            node.setRotate(angleX, -angleY, angleZ);
+            currentEuler.rotate(angleX, angleY, angleZ, ZYX);
+            eulerAngle.rotate(angleX, angleY, angleZ, ZYX);
+            node.setRotate(angleX, angleY, angleZ);
             node.moveTo(eulerAngle.getX(), eulerAngle.getY(), eulerAngle.getZ());
         }
     }
 
+    @Deprecated
     public void rotateByAxis(double angle, double x, double y, double z) {
         System.out.println("euler before: " + currentEuler);
         currentEuler = EulerAngle.fromArray(RotationUtil.rotateModel(
@@ -132,6 +141,29 @@ public class ModelEntity {
 //
 //            node.setRotate(euler.x, euler.y, euler.z);
 //            System.out.println(node.getVector());
+        }
+    }
+
+
+    public void rotationAdd(double rx, double ry, double rz) {
+        this.rx += rx;
+        this.ry += ry;
+        this.rz += rz;
+        currentEuler = new EulerAngle(
+                currentEuler.getX()+rx,
+                currentEuler.getY()+ry,
+                currentEuler.getZ()+rz
+        );
+        for (ArmorStandNode node : this.armorStands) {
+            EulerAngle eulerAngle = new EulerAngle(
+                    node.currentX,
+                    node.currentY,
+                    node.currentZ
+            );
+            eulerAngle.rotate(rx, ry, rz, XYZ);
+            System.out.println(node.headPoseAngleY);
+            node.setRotate(this.rx, this.ry, this.rz);
+            node.moveTo(eulerAngle.getX(), eulerAngle.getY(), eulerAngle.getZ());
         }
     }
 
@@ -196,28 +228,28 @@ public class ModelEntity {
 
         public void setRotate(double angleX, double angleY, double angleZ) {
             this.headPoseAngleX = angleX;
-            this.headPoseAngleY = angleY;
-            this.headPoseAngleZ = angleZ;
+            this.headPoseAngleY = -angleY;
+            this.headPoseAngleZ = -angleZ;
         }
 
-        public Vector3 getVector() {
-            EulerAngle angle = new EulerAngle(1, 0, 0);
-            angle.rotate(headPoseAngleX, headPoseAngleY, headPoseAngleZ, XYZ);
-            return new Vector3((float) angle.getX(), (float) -angle.getY(), (float) angle.getZ());
-        }
-
-        public void setVector(Vector3 target) {
-            double d = target.x;
-            double e = target.y;
-            double f = target.z;
-            double g = Math.sqrt(d * d + f * f);
-            headPoseAngleX = MathHelper.wrapDegrees((float)(Math.atan2(g, e) * 57.2957763671875) - 90.0F);
-            headPoseAngleY = MathHelper.wrapDegrees((float)((Math.atan2(d, f) * 57.2957763671875)));
-            headPoseAngleZ = 0;
-            System.out.println(headPoseAngleX);
-            System.out.println(headPoseAngleY);
-            System.out.println(headPoseAngleZ);
-        }
+//        public Vector3 getVector() {
+//            EulerAngle angle = new EulerAngle(1, 0, 0);
+//            angle.rotate(headPoseAngleX, headPoseAngleY, headPoseAngleZ, XYZ);
+//            return new Vector3((float) angle.getX(), (float) -angle.getY(), (float) angle.getZ());
+//        }
+//
+//        public void setVector(Vector3 target) {
+//            double d = target.x;
+//            double e = target.y;
+//            double f = target.z;
+//            double g = Math.sqrt(d * d + f * f);
+//            headPoseAngleX = MathHelper.wrapDegrees((float)(Math.atan2(g, e) * 57.2957763671875) - 90.0F);
+//            headPoseAngleY = MathHelper.wrapDegrees((float)((Math.atan2(d, f) * 57.2957763671875)));
+//            headPoseAngleZ = 0;
+//            System.out.println(headPoseAngleX);
+//            System.out.println(headPoseAngleY);
+//            System.out.println(headPoseAngleZ);
+//        }
 
         public void update() {
             this.armorStand.teleport(this.centerLocation.clone().add(currentX, currentY, currentZ));

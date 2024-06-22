@@ -12,14 +12,14 @@ public class ConfigCommand {
         return new CommandAPICommand("config")
                 .withSubcommand(tp())
                 .withSubcommand(rotate())
-                .withSubcommand(rotateByAxis());
+                .withSubcommand(rotateAdd());
     }
 
     CommandAPICommand tp() {
         return new CommandAPICommand("tp")
                 .withArguments(new IntegerArgument("index"))
                 .withArguments(new LocationArgument("location"))
-                .executesPlayer((player, args) -> {
+                .executes((player, args) -> {
                     int index = (int) args.get("index") - 1;
                     Location location = (Location) args.get("location");
                     if (ModelEntity.entities.size() <= index) {
@@ -41,7 +41,7 @@ public class ConfigCommand {
                 .withArguments(new DoubleArgument("rx"))
                 .withArguments(new DoubleArgument("ry"))
                 .withArguments(new DoubleArgument("rz"))
-                .executesPlayer((player, args) -> {
+                .executes((player, args) -> {
                     int index = (int) args.get("index") - 1;
                     double rx = (double) args.get("rx");
                     double ry = (double) args.get("ry");
@@ -62,20 +62,20 @@ public class ConfigCommand {
                 });
     }
 
-    CommandAPICommand rotateByAxis() {
-        return new CommandAPICommand("rotateByAxis")
+    CommandAPICommand rotateAdd() {
+        return new CommandAPICommand("rotateAdd")
                 .withArguments(new IntegerArgument("index"))
-                .withArguments(new DoubleArgument("x"))
-                .withArguments(new DoubleArgument("y"))
-                .withArguments(new DoubleArgument("z"))
-                .withArguments(new DoubleArgument("angle"))
-                .executesPlayer((player, args) -> {
+                .withArguments(new DoubleArgument("angleX"))
+                .withArguments(new DoubleArgument("angleY"))
+                .withArguments(new DoubleArgument("angleZ"))
+                .executes((player, args) -> {
                     int index = (int) args.get("index") - 1;
-                    double x = (double) args.get("x");
-                    double y = (double) args.get("y");
-                    double z = (double) args.get("z");
-                    double angle = (double) args.get("angle");
-                    angle = Math.toRadians(angle);
+                    double rx = (double) args.get("angleX");
+                    double ry = (double) args.get("angleY");
+                    double rz = (double) args.get("angleZ");
+                    rx = Math.toRadians(rx);
+                    ry = Math.toRadians(ry);
+                    rz = Math.toRadians(rz);
                     if (ModelEntity.entities.size() <= index) {
                         player.sendMessage("Entity not found");
                         return;
@@ -83,7 +83,8 @@ public class ConfigCommand {
                         player.sendMessage("Entity not found");
                         return;
                     }
-                    ModelEntity.entities.get(index).rotateByAxis(angle, x, y, z);
+                    ModelEntity.entities.get(index).rotationAdd(rx, ry, rz);
+                    ModelEntity.entities.get(index).update();
 //                    ModelEntity.entities.get(index).update();
                     player.sendMessage("§aEntity rotated");
                 });

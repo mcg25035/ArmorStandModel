@@ -6,6 +6,7 @@ import java.util.List;
 
 import dev.codingbear.utils.EulerAngle;
 import dev.codingbear.utils.MathHelper;
+import dev.codingbear.utils.RotationAngles;
 import dev.codingbear.utils.RotationUtil;
 import dev.ideog.Quaternion;
 import dev.ideog.Vector3;
@@ -26,7 +27,12 @@ public class ModelEntity {
     public List<ItemStack> headItems;
     public static List<ModelEntity> entities = new ArrayList<>();
     private final List<ArmorStandNode> armorStands = new ArrayList<>();
-    EulerAngle currentEuler = new EulerAngle(0, 0, 0);
+
+    public double[][] currentMatrix = MathHelper.getUnitMatrix(3);
+    double[] axisX = {1, 0, 0};
+    double[] axisY = {0, 1, 0};
+    double[] axisZ = {0, 0, 1};
+
     public Instant spawnAt;
     public int dx;
     public int dy;
@@ -48,21 +54,13 @@ public class ModelEntity {
         this.dy = model.size.y;
         this.dz = model.size.z;
 
-        int x = 0;
-        int y = 0;
-        int z = 0;
-
+        int x = 0, y = 0, z = 0;
         double scale = 0;
-        if (size == ArmorStandSize.SMALL) {
-            scale = 0.4375;
-        } else if (size == ArmorStandSize.MEDIUM) {
-            scale = 0.625;
-        } else if (size == ArmorStandSize.LARGE) {
-            scale = 1.0;
-        }
+        if (size == ArmorStandSize.SMALL) scale = 0.4375;
+        else if (size == ArmorStandSize.MEDIUM) scale = 0.625;
+        else if (size == ArmorStandSize.LARGE) scale = 1.0;
 
         for (ItemStack i : model.headItems) {
-
             if (i.getType() != Material.AIR) {
                 ArmorStandNode node = new ArmorStandNode(
                         i,
@@ -74,7 +72,6 @@ public class ModelEntity {
                 );
                 this.armorStands.add(node);
             }
-
 
             z++;
 
@@ -95,77 +92,64 @@ public class ModelEntity {
         entities.add(this);
     }
 
-    public void rotateEuler(double angleX, double angleY, double angleZ) {
-        this.rx = angleX;
-        this.ry = angleY;
-        this.rz = angleZ;
+    public void rotateX(double angle) {
+        this.rx += angle;
+        currentMatrix = MathHelper.matrixMultiply(currentMatrix, MathHelper.getRotationXMatrix(angle));
+        axisX = MathHelper.matrixMultiply(new double[]{1, 0, 0}, currentMatrix);
+        axisY = MathHelper.matrixMultiply(new double[]{0, 1, 0}, currentMatrix);
+        axisZ = MathHelper.matrixMultiply(new double[]{0, 0, 1}, currentMatrix);
+        double[] armorStandAngles = RotationAngles.findRotationAngles(axisX, axisY, axisZ);
 
-        currentEuler = new EulerAngle(angleX, angleY, angleZ);
+        MathHelper.printMatrix(currentMatrix);
+
         for (ArmorStandNode node : this.armorStands) {
-            EulerAngle eulerAngle = new EulerAngle(
-                    node.rawX,
-                    node.rawY,
-                    node.rawZ
-            );
-            currentEuler.rotate(angleX, angleY, angleZ, ZYX);
-            eulerAngle.rotate(angleX, angleY, angleZ, ZYX);
-            node.setRotate(angleX, angleY, angleZ);
-            node.moveTo(eulerAngle.getX(), eulerAngle.getY(), eulerAngle.getZ());
+            double[] nodeCurrent = {node.rawX, node.rawY, node.rawZ};
+            double[] rotated = MathHelper.matrixMultiply(nodeCurrent, currentMatrix);
+            node.moveTo(rotated[0], rotated[1], rotated[2]);
+            node.setRotate(armorStandAngles[0], armorStandAngles[1], armorStandAngles[2]);
         }
     }
 
-    @Deprecated
-    public void rotateByAxis(double angle, double x, double y, double z) {
-        System.out.println("euler before: " + currentEuler);
-        currentEuler = EulerAngle.fromArray(RotationUtil.rotateModel(
-                currentEuler.toArray(),
-                new Vector3D(x, y, z),
-                angle*57.2972222222223,
-                "XYZ"
-        ));
-        System.out.println("euler after: " + currentEuler);
+    public void rotateY(double angle) {
+        this.ry += angle;
+        currentMatrix = MathHelper.matrixMultiply(currentMatrix, MathHelper.getRotationYMatrix(angle));
+        axisX = MathHelper.matrixMultiply(new double[]{1, 0, 0}, currentMatrix);
+        axisY = MathHelper.matrixMultiply(new double[]{0, 1, 0}, currentMatrix);
+        axisZ = MathHelper.matrixMultiply(new double[]{0, 0, 1}, currentMatrix);
+        double[] armorStandAngles = RotationAngles.findRotationAngles(axisX, axisY, axisZ);
 
-//        angle = Math.toRadians(angle);
+        MathHelper.printMatrix(currentMatrix);
+
         for (ArmorStandNode node : this.armorStands) {
-            node.setRotate(currentEuler.getX(), currentEuler.getY(), currentEuler.getZ());
+            double[] nodeCurrent = {node.rawX, node.rawY, node.rawZ};
+            double[] rotated = MathHelper.matrixMultiply(nodeCurrent, currentMatrix);
+            node.moveTo(rotated[0], rotated[1], rotated[2]);
+            node.setRotate(armorStandAngles[0], armorStandAngles[1], armorStandAngles[2]);
+            if (node.rawX == 0 && node.rawY == 1 && node.rawZ == 0) {
+                System.out.println("node: " + node.currentX + " " + node.currentY + " " + node.currentZ);
+            }
+        }
+    }
 
-            node.update();
+    public void rotateZ(double angle) {
+        this.rz += angle;
+        currentMatrix = MathHelper.matrixMultiply(currentMatrix, MathHelper.getRotationZMatrix(angle));
+        axisX = MathHelper.matrixMultiply(new double[]{1, 0, 0}, currentMatrix);
+        axisY = MathHelper.matrixMultiply(new double[]{0, 1, 0}, currentMatrix);
+        axisZ = MathHelper.matrixMultiply(new double[]{0, 0, 1}, currentMatrix);
+        double[] armorStandAngles = RotationAngles.findRotationAngles(axisX, axisY, axisZ);
 
+        MathHelper.printMatrix(currentMatrix);
 
-
-
-//
-//            Quaternion nodeQuaternion = new Quaternion(nodeEuler);
-////            nodeQuaternion.rotateByAxis(new Vector3((float) x, (float) y, (float) z), (float) angle);
-//            Vector3 euler = nodeQuaternion.eulerAngles();
-//
-//            node.setRotate(euler.x, euler.y, euler.z);
-//            System.out.println(node.getVector());
+        for (ArmorStandNode node : this.armorStands) {
+            double[] nodeCurrent = {node.rawX, node.rawY, node.rawZ};
+            double[] rotated = MathHelper.matrixMultiply(nodeCurrent, currentMatrix);
+            node.moveTo(rotated[0], rotated[1], rotated[2]);
+            node.setRotate(armorStandAngles[0], armorStandAngles[1], armorStandAngles[2]);
         }
     }
 
 
-    public void rotationAdd(double rx, double ry, double rz) {
-        this.rx += rx;
-        this.ry += ry;
-        this.rz += rz;
-        currentEuler = new EulerAngle(
-                currentEuler.getX()+rx,
-                currentEuler.getY()+ry,
-                currentEuler.getZ()+rz
-        );
-        for (ArmorStandNode node : this.armorStands) {
-            EulerAngle eulerAngle = new EulerAngle(
-                    node.currentX,
-                    node.currentY,
-                    node.currentZ
-            );
-            eulerAngle.rotate(rx, ry, rz, XYZ);
-            System.out.println(node.headPoseAngleY);
-            node.setRotate(this.rx, this.ry, this.rz);
-            node.moveTo(eulerAngle.getX(), eulerAngle.getY(), eulerAngle.getZ());
-        }
-    }
 
     public void moveTo(Location location) {
         for (ArmorStandNode node : this.armorStands) {
@@ -185,6 +169,79 @@ public class ModelEntity {
         }
         entities.remove(this);
     }
+
+//    @Deprecated
+//    public void rotateEuler(double angleX, double angleY, double angleZ) {
+//        this.rx = angleX;
+//        this.ry = angleY;
+//        this.rz = angleZ;
+//
+//        currentEuler = new EulerAngle(angleX, angleY, angleZ);
+//        for (ArmorStandNode node : this.armorStands) {
+//            EulerAngle eulerAngle = new EulerAngle(
+//                    node.rawX,
+//                    node.rawY,
+//                    node.rawZ
+//            );
+//            currentEuler.rotate(angleX, angleY, angleZ, ZYX);
+//            eulerAngle.rotate(angleX, angleY, angleZ, ZYX);
+//            node.setRotate(angleX, angleY, angleZ);
+//            node.moveTo(eulerAngle.getX(), eulerAngle.getY(), eulerAngle.getZ());
+//        }
+//    }
+//
+//    @Deprecated
+//    public void rotateByAxis(double angle, double x, double y, double z) {
+//        System.out.println("euler before: " + currentEuler);
+//        currentEuler = EulerAngle.fromArray(RotationUtil.rotateModel(
+//                currentEuler.toArray(),
+//                new Vector3D(x, y, z),
+//                angle*57.2972222222223,
+//                "XYZ"
+//        ));
+//        System.out.println("euler after: " + currentEuler);
+//
+////        angle = Math.toRadians(angle);
+//        for (ArmorStandNode node : this.armorStands) {
+//            node.setRotate(currentEuler.getX(), currentEuler.getY(), currentEuler.getZ());
+//
+//            node.update();
+//
+//
+//
+//
+////
+////            Quaternion nodeQuaternion = new Quaternion(nodeEuler);
+//////            nodeQuaternion.rotateByAxis(new Vector3((float) x, (float) y, (float) z), (float) angle);
+////            Vector3 euler = nodeQuaternion.eulerAngles();
+////
+////            node.setRotate(euler.x, euler.y, euler.z);
+////            System.out.println(node.getVector());
+//        }
+//    }
+//
+//    @Deprecated
+//    public void rotationAdd(double rx, double ry, double rz) {
+//        this.rx += rx;
+//        this.ry += ry;
+//        this.rz += rz;
+//        currentEuler = new EulerAngle(
+//                currentEuler.getX()+rx,
+//                currentEuler.getY()+ry,
+//                currentEuler.getZ()+rz
+//        );
+//        for (ArmorStandNode node : this.armorStands) {
+//            EulerAngle eulerAngle = new EulerAngle(
+//                    node.currentX,
+//                    node.currentY,
+//                    node.currentZ
+//            );
+////            eulerAngle.rotate(rx, ry, rz, XYZ);
+//            System.out.println(node.headPoseAngleY);
+//            node.setRotate(this.rx, this.ry, this.rz);
+//            node.moveTo(eulerAngle.getX(), eulerAngle.getY(), eulerAngle.getZ());
+//        }
+//    }
 
     private static class ArmorStandNode {
         public ArmorStand armorStand;

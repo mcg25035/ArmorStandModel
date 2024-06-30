@@ -70,34 +70,29 @@ public class RotationAngles {
         return new double[] {-thetaX, thetaY, thetaZ};
     }
 
-    public static void test(double rx, double ry, double rz) {
-        // get local x, y, z axes as vector after rotation rx, ry, rz as test input
-        EulerAngle x = new EulerAngle(1, 0, 0);
-        EulerAngle y = new EulerAngle(0, 1, 0);
-        EulerAngle z = new EulerAngle(0, 0, 1);
-        x.rotate(rx, ry, rz, EulerAngle.RotationOrder.XYZ);
-        y.rotate(rx, ry, rz, EulerAngle.RotationOrder.XYZ);
-        z.rotate(rx, ry, rz, EulerAngle.RotationOrder.XYZ);
-        double[] x1 = {x.getX(), x.getY(), x.getZ()};
-        double[] y1 = {y.getX(), y.getY(), y.getZ()};
-        double[] z1 = {z.getX(), z.getY(), z.getZ()};
-        System.out.println("x1: " + x1[0] + " " + x1[1] + " " + x1[2]);
-        System.out.println("y1: " + y1[0] + " " + y1[1] + " " + y1[2]);
-        System.out.println("z1: " + z1[0] + " " + z1[1] + " " + z1[2]);
+//    public static void test(double rx, double ry, double rz) {
+//        // get local x, y, z axes as vector after rotation rx, ry, rz as test input
+//        EulerAngle x = new EulerAngle(1, 0, 0);
+//        EulerAngle y = new EulerAngle(0, 1, 0);
+//        EulerAngle z = new EulerAngle(0, 0, 1);
+//        x.rotate(rx, ry, rz, EulerAngle.RotationOrder.XYZ);
+//        y.rotate(rx, ry, rz, EulerAngle.RotationOrder.XYZ);
+//        z.rotate(rx, ry, rz, EulerAngle.RotationOrder.XYZ);
+//        double[] x1 = {x.getX(), x.getY(), x.getZ()};
+//        double[] y1 = {y.getX(), y.getY(), y.getZ()};
+//        double[] z1 = {z.getX(), z.getY(), z.getZ()};
+//
+//        // get the euler angles that convert x, y, z axes to x1, y1, z1 axes
+//        double[] angles = findRotationAngles(x1, y1, z1);
+//        System.out.println("Actual: " + Math.toDegrees(rx) + " " + Math.toDegrees(ry) + " " + Math.toDegrees(rz));
+//        System.out.println("Predicated: " + Math.toDegrees(angles[0]) + " " + Math.toDegrees(angles[1]) + " " + Math.toDegrees(angles[2]));
+//    }
 
-        // get the euler angles that convert x, y, z axes to x1, y1, z1 axes
-        double[] angles = findRotationAngles(x1, y1, z1);
-        System.out.println("Actual: " + Math.toDegrees(rx) + " " + Math.toDegrees(ry) + " " + Math.toDegrees(rz));
-        System.out.println("Predicated: " + Math.toDegrees(angles[0]) + " " + Math.toDegrees(angles[1]) + " " + Math.toDegrees(angles[2]));
-    }
-
-    public static void main(String[] args) {
-        for (int i=0; i<1; i++) {
-            double rx = Math.random() * Math.PI;
-            double ry = Math.random() * Math.PI;
-            double rz = Math.random() * Math.PI;
-            test(rx, ry, rz);
-        }
-    }
+//    public static void main(String[] args) {
+//            double rx = Math.toRadians(30);
+//            double ry = Math.toRadians(60);
+//            double rz = Math.toRadians(89.99999999);
+//            test(rx, ry, rz);
+//    }
 
 }

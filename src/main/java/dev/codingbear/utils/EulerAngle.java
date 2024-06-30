@@ -8,6 +8,9 @@ public class EulerAngle {
     private final double rawX;
     private final double rawY;
     private final double rawZ;
+    private double[] axisX = {1, 0, 0};
+    private double[] axisY = {0, 1, 0};
+    private double[] axisZ = {0, 0, 1};
     private double x;
     private double y;
     private double z;
@@ -19,16 +22,51 @@ public class EulerAngle {
         reset();
     }
 
-    private void reset() {
+    public void reset() {
         this.x = rawX;
         this.y = rawY;
         this.z = rawZ;
+        axisX = new double[]{1, 0, 0};
+        axisY = new double[]{0, 1, 0};
+        axisZ = new double[]{0, 0, 1};
+    }
+    public void rotateX(double angle) {
+        double[][] rotationMatrix = {
+                {1, 0, 0},
+                {0, Math.cos(angle), -Math.sin(angle)},
+                {0, Math.sin(angle), Math.cos(angle)}
+        };
+        applyRotation(rotationMatrix);
+        axisX = applyRotationToAxis(rotationMatrix, axisX);
+        axisY = applyRotationToAxis(rotationMatrix, axisY);
+        axisZ = applyRotationToAxis(rotationMatrix, axisZ);
     }
 
-    public void rotate(double angleX, double angleY, double angleZ, RotationOrder order) {
-        reset();
-        double[][] rotationMatrix = calculateRotationMatrix(angleX, angleY, angleZ, order);
+    public void rotateY(double angle) {
+        double[][] rotationMatrix = {
+                {Math.cos(angle), 0, Math.sin(angle)},
+                {0, 1, 0},
+                {-Math.sin(angle), 0, Math.cos(angle)}
+        };
         applyRotation(rotationMatrix);
+        axisX = applyRotationToAxis(rotationMatrix, axisX);
+        axisY = applyRotationToAxis(rotationMatrix, axisY);
+        axisZ = applyRotationToAxis(rotationMatrix, axisZ);
+    }
+
+    public void rotateZ(double angle) {
+        double[][] rotationMatrix = {
+                {Math.cos(angle), -Math.sin(angle), 0},
+                {Math.sin(angle), Math.cos(angle), 0},
+                {0, 0, 1}
+        };
+        applyRotation(rotationMatrix);
+        axisX = applyRotationToAxis(rotationMatrix, axisX);
+        axisY = applyRotationToAxis(rotationMatrix, axisY);
+        axisZ = applyRotationToAxis(rotationMatrix, axisZ);
+    }
+    public double[] getArmorStandEuler() {
+        return RotationAngles.findRotationAngles(axisX, axisY, axisZ);
     }
 
     public double getX() {
@@ -43,41 +81,6 @@ public class EulerAngle {
         return z;
     }
 
-    private double[][] calculateRotationMatrix(double angleX, double angleY, double angleZ, RotationOrder order) {
-        double[][] Rx = {
-                {1, 0, 0},
-                {0, Math.cos(angleX), -Math.sin(angleX)},
-                {0, Math.sin(angleX), Math.cos(angleX)}
-        };
-        double[][] Ry = {
-                {Math.cos(angleY), 0, Math.sin(angleY)},
-                {0, 1, 0},
-                {-Math.sin(angleY), 0, Math.cos(angleY)}
-        };
-        double[][] Rz = {
-                {Math.cos(angleZ), -Math.sin(angleZ), 0},
-                {Math.sin(angleZ), Math.cos(angleZ), 0},
-                {0, 0, 1}
-        };
-
-        switch (order) {
-            case XYZ:
-                return matrixMultiply(matrixMultiply(Rz, Ry), Rx);
-            case XZY:
-                return matrixMultiply(matrixMultiply(Ry, Rz), Rx);
-            case YXZ:
-                return matrixMultiply(matrixMultiply(Rz, Rx), Ry);
-            case YZX:
-                return matrixMultiply(matrixMultiply(Rx, Rz), Ry);
-            case ZXY:
-                return matrixMultiply(matrixMultiply(Ry, Rx), Rz);
-            case ZYX:
-                return matrixMultiply(matrixMultiply(Rx, Ry), Rz);
-            default:
-                return new double[3][3]; // Should not reach here
-        }
-    }
-
     private void applyRotation(double[][] rotationMatrix) {
         double newX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
         double newY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
@@ -87,16 +90,11 @@ public class EulerAngle {
         z = newZ;
     }
 
-    private double[][] matrixMultiply(double[][] A, double[][] B) {
-        double[][] result = new double[3][3];
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                for (int k = 0; k < 3; k++) {
-                    result[i][j] += A[i][k] * B[k][j];
-                }
-            }
-        }
-        return result;
+    private double[] applyRotationToAxis(double[][] rotationMartix, double[] axis) {
+        double newX = rotationMartix[0][0] * axis[0] + rotationMartix[0][1] * axis[1] + rotationMartix[0][2] * axis[2];
+        double newY = rotationMartix[1][0] * axis[0] + rotationMartix[1][1] * axis[1] + rotationMartix[1][2] * axis[2];
+        double newZ = rotationMartix[2][0] * axis[0] + rotationMartix[2][1] * axis[1] + rotationMartix[2][2] * axis[2];
+        return new double[]{newX, newY, newZ};
     }
 
     public double[] toArray(){
